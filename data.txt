@@ -1,1 +1,1 @@
-('fares', 'DadAFAF', 'faresmohmed1298@gmail.com', '1 year', 1000)
+('fares', 'sadsd', 'fares', '1 month', 100)

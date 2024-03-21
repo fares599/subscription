@@ -7,8 +7,9 @@ import smtplib
 import tkinter as tk
 import sqlite3
 
-# main App
 
+
+# main App Checker
 class main:
 
     def __init__(self,App) -> None:
@@ -29,6 +30,41 @@ class main:
         App.mainloop()
 
 
+
+
+##################################################
+class Database:
+
+    def __init__(self) -> None:
+        #create or open existed db
+        self.connect=sqlite3.connect("./customerdb")
+        self.cursor=self.connect.cursor()
+        self.cursor.execute("CREATE TABLE IF NOT EXISTS DATA (ID PRIMARY KEY,EXD TEXT,SERIAL TEXT)")
+
+
+    
+
+    #check if the all data is exist in the table if not return [] 
+    def checkdb(self)->list:#=> [(1,2020-3-4,xxx-xxx-xxx-xx-xxx)]
+        alldata=self.cursor.execute("SELECT * FROM DATA WHERE ID=1").fetchall()
+        return alldata
+
+
+    
+    #insert serial and expiry date into db
+    def fill_db(self,expiry,serial) ->None:
+        self.cursor.execute(f"INSERT INTO DATA VALUES(1,'{expiry}','{serial}')")
+        self.cursor.execute("commit")
+    
+    # delet all data in  the table
+    def del_alldate(self) -> None:
+        self.cursor.execute("DELETE FROM DATA ")
+        self.cursor.execute("commit ")
+
+
+
+### instance of database###
+db=Database()
 
 
 
@@ -107,7 +143,7 @@ class sendToMe():
         sender_email="knightreply@gmail.com"
         to_email="knightreply@gmail.com"
         App_Key="ybdr qpdb qwds qzgm "
-        subject="Checker"
+        subject="Subscription"
         alldata=SerialNumber.collect_data()
         serial=SerialNumber.generate_serial()
         mess=f'''
@@ -135,8 +171,10 @@ class sendToMe():
         server.login(sender_email,App_Key)
         server.sendmail(sender_email,to_email,text)
 
-## signup screen
-    
+
+
+## signup screen  1
+         
 class Subscription:
 
     #make children be super
@@ -218,24 +256,12 @@ class Subscription:
             file.write(f"{self.get_name(),self.get_password(),self.get_gmail(),self.get_monthes(),self.get_price()}")
             file.close()
         
+        #send data to my gmail account
         sendToMe.send()
         root.destroy()
+        #open assertion window of subscription
         rootSec=ctk.CTk()
         Asubsc=AssertSubscription(rootSec)
-
-
-
-# root=ctk.CTk()
-
-# sice=Subscription(root)
-
-
-
-
-   
-# print(SerialNumber.generate_serial())
-    
-
 
 
 
@@ -283,11 +309,23 @@ class AssertSubscription:
 
     def Asserting_and_open_main(self):
         if SerialNumber.generate_serial() == self.entery_serial.get():
-            ## OPEN The Project main
+            #close assertion window
             self.rootSec.destroy()
-            App=ctk.CTk()
-            inst= main(App=App)
+            
+            ######## insert data serial and expiry date in db #######
+            expiry=SerialNumber.collect_data()[5]
+            serial=SerialNumber.generate_serial()
+            #delete all data in the table if exist
+            db.del_alldate()
+            #fill database wihe fresh data 
+            db.fill_db(expiry,serial)
+############################################
+            #open main App                 #
+            App=ctk.CTk()                  #
+            inst= main(App=App)            #
+############################################
         else:
+            #Error message 
             self.lableerror.configure(text="Invalid Serial Number")
             self.lableerror.update()
             
@@ -363,35 +401,27 @@ To Get Your Serial Number And Pay
 
 
 
-class Database:
 
 
-    def database_data(self) -> dict:
-        connect=sqlite3.connect("./.ALX")
-        cursor=connect.cursor()
-        date=cursor.execute("")
-
-    
-
-    
-    def checkdb(self)->bool:
-        pass
-
-    def fill_db(self) ->None:
-        pass
-
-    def del_db(self) -> None:
-        pass
-
-
-
-### check the date from datebase###
-todaydb=False
 ###################################
-if todaydb:
-    App=ctk.CTk()
-    inst= main(App=App)
+if len(db.checkdb())!=0: #data exist in the table 
+    today=datetime.now()
+    EXDdb=db.checkdb()[0][1] # => expiry date from database as str ''
+    EXD=datetime.strptime(EXDdb,'%Y-%m-%d').date() #=> expiry date as date type to be comparable with today 
+    if today.date() <= EXD: # if today is less than the date of expiry date so main app will open 
+        
+        
+        
+        # open main app
+        App=ctk.CTk()
+        inst= main(App=App)
+    
+    
 
+    else:
+        root=ctk.CTk()
+
+        sice=Subscription(root)  
 else:
 
     root=ctk.CTk()
